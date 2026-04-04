@@ -1,0 +1,119 @@
+{% comment %}
+  CRO Contextual Hero — manual install
+  1. Upload cro-hero-banner.js and cro-hero-banner.css from shopify/storefront/ to Theme assets.
+  2. Add this file to sections/ (Online Store → Edit code).
+  3. Customize theme → add “CRO contextual hero” to the homepage (or any template).
+  4. Set “CRO API base URL” to your public HTTPS API (e.g. Cloudflare Tunnel / Railway), not localhost.
+{% endcomment %}
+
+{{ 'cro-hero-banner.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'cro-hero-banner.js' | asset_url }}" defer></script>
+
+<div class="page-width section-{{ section.id }}-padding" data-cro-hero-mount>
+  <script type="application/json" data-cro-hero-config>
+    {
+      "apiBase": {{ section.settings.api_base_url | json }},
+      "surfaceId": {{ section.settings.surface_id | default: 'hero_banner' | json }},
+      "isReturning": {% if customer %}true{% else %}false{% endif %},
+      "locale": {{ request.locale.iso_code | json }},
+      "template": {{ template.name | json }},
+      "ctaUrl": {% if section.settings.cta_link != blank %}{{ section.settings.cta_link | json }}{% else %}{{ routes.all_products_collection_url | json }}{% endif %},
+      "utmCampaign": {{ section.settings.utm_campaign_hint | json }},
+      "showDebug": {% if section.settings.show_debug %}true{% else %}false{% endif %},
+      "fallbackHeadline": {{ section.settings.fallback_headline | json }},
+      "fallbackSubtitle": {{ section.settings.fallback_subtitle | json }}
+    }
+  </script>
+
+  <div
+    data-cro-hero-root
+    style="display: none;"
+    {{ section.shopify_attributes }}
+  >
+    <div class="cro-hero-inner variant-a">
+      {% if section.settings.eyebrow != blank %}
+        <p class="cro-eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      {% endif %}
+      <h2 data-cro-headline>{{ section.settings.fallback_headline | escape }}</h2>
+      <p data-cro-subtitle>{{ section.settings.fallback_subtitle | escape }}</p>
+      <div data-cro-trust></div>
+      <a data-cro-cta class="button" href="{% if section.settings.cta_link != blank %}{{ section.settings.cta_link }}{% else %}{{ routes.all_products_collection_url }}{% endif %}">
+        {{ section.settings.cta_label_default | default: 'Shop now' | escape }}
+      </a>
+      <p data-cro-debug hidden></p>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "CRO contextual hero",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Calls your Cluster CRO API (/decide, /feedback). Deploy API with HTTPS; browsers block mixed content on checkout domains."
+    },
+    {
+      "type": "text",
+      "id": "api_base_url",
+      "label": "CRO API base URL",
+      "default": "https://your-cro-api.example.com",
+      "info": "No trailing slash. Must be HTTPS on a live storefront."
+    },
+    {
+      "type": "text",
+      "id": "surface_id",
+      "label": "Surface id",
+      "default": "hero_banner"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow (static until API loads)",
+      "default": "Featured"
+    },
+    {
+      "type": "text",
+      "id": "fallback_headline",
+      "label": "Fallback headline (if API fails)",
+      "default": "Shop our bestsellers"
+    },
+    {
+      "type": "textarea",
+      "id": "fallback_subtitle",
+      "label": "Fallback subtitle",
+      "default": "Curated picks for you."
+    },
+    {
+      "type": "text",
+      "id": "cta_label_default",
+      "label": "CTA label before API loads",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "CTA link"
+    },
+    {
+      "type": "text",
+      "id": "utm_campaign_hint",
+      "label": "Optional utm_campaign sent as context (for segment rules)",
+      "info": "Leave blank to rely on URL ?utm_* only."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_debug",
+      "label": "Show variant/segment debug line",
+      "default": false
+    }
+  ],
+  "presets": [
+    {
+      "name": "CRO contextual hero"
+    }
+  ]
+}
+{% endschema %}

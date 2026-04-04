@@ -1,0 +1,97 @@
+/* CRO contextual hero — scoped to mount so it won’t clash with the main theme */
+[data-cro-hero-mount] {
+  --cro-ink: #18212f;
+  --cro-muted: #556274;
+  --cro-line: #d7dce3;
+}
+
+[data-cro-hero-root] {
+  margin: 0;
+}
+
+[data-cro-hero-root] .cro-hero-inner {
+  border-radius: 14px;
+  padding: 1.5rem;
+  border: 1px solid var(--cro-line);
+}
+
+[data-cro-hero-root] .cro-eyebrow {
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  color: var(--cro-muted);
+}
+
+[data-cro-hero-root] [data-cro-headline] {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 1.15;
+  color: var(--cro-ink);
+}
+
+[data-cro-hero-root] [data-cro-subtitle] {
+  margin: 0 0 1rem;
+  color: #354255;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+[data-cro-hero-root] [data-cro-trust] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+[data-cro-hero-root] .cro-trust-pill {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--cro-line);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--cro-muted);
+}
+
+[data-cro-hero-root] [data-cro-cta] {
+  display: inline-block;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+[data-cro-hero-root] [data-cro-debug] {
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--cro-muted);
+}
+
+/* Variant skins (match backend content.style_class) */
+[data-cro-hero-root] .variant-a {
+  background: linear-gradient(160deg, #fffdfa 0%, #fff0cf 100%);
+}
+[data-cro-hero-root] .variant-a [data-cro-cta] {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+[data-cro-hero-root] .variant-b {
+  background: linear-gradient(160deg, #f4fff8 0%, #dcfbe8 100%);
+}
+[data-cro-hero-root] .variant-b [data-cro-cta] {
+  background: #0f8a4f;
+  color: #fff;
+}
+
+[data-cro-hero-root] .variant-c {
+  background: linear-gradient(160deg, #fff8f7 0%, #ffe4dd 100%);
+}
+[data-cro-hero-root] .variant-c [data-cro-cta] {
+  background: #fff;
+  color: #a2311b;
+  border: 2px solid #d0503d;
+}

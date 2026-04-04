@@ -1,0 +1,12 @@
+# Theme app extension — copy this folder into your Shopify CLI app as:
+#   your-shopify-app/extensions/cro-contextual-hero/
+# Then run `shopify app dev` from the app root.
+#
+# https://shopify.dev/docs/apps/build/online-store/theme-app-extensions
+
+api_version = "2024-10"
+
+[[extensions]]
+name = "CRO Contextual Hero"
+handle = "cro-contextual-hero"
+type = "theme"

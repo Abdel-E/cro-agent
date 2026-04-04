@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Hero Banner Agent — Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <span class="logo">Smart Hero Banner Agent</span>
+        <span class="badge">Contextual Personalization Demo</span>
+      </header>
+
+      <p class="intro">
+        Same store, same moment — three visitors see <strong>completely different</strong>
+        experiences optimised for their segment. The contextual bandit learns which
+        content converts best <em>per segment</em> in real time.
+      </p>
+
+      <!-- ── Three personalization panels ── -->
+      <section class="panels">
+        <div class="panel-card" id="panel-0">
+          <div class="panel-tag"><span class="tag-dot tag-dot--blue"></span>Mobile · Meta Ad · New</div>
+          <div class="hero variant-a" id="hero-0">
+            <p class="eyebrow" id="eyebrow-0">Workspace essentials</p>
+            <h2 id="headline-0">Loading…</h2>
+            <p id="subtitle-0"></p>
+            <div class="trust-row" id="trust-0"></div>
+            <button class="cta" id="cta-0">Shop Now</button>
+          </div>
+          <p class="panel-meta" id="meta-0">—</p>
+        </div>
+
+        <div class="panel-card" id="panel-1">
+          <div class="panel-tag"><span class="tag-dot tag-dot--green"></span>Desktop · Direct · New</div>
+          <div class="hero variant-b" id="hero-1">
+            <p class="eyebrow" id="eyebrow-1">Workspace essentials</p>
+            <h2 id="headline-1">Loading…</h2>
+            <p id="subtitle-1"></p>
+            <div class="trust-row" id="trust-1"></div>
+            <button class="cta" id="cta-1">Shop Now</button>
+          </div>
+          <p class="panel-meta" id="meta-1">—</p>
+        </div>
+
+        <div class="panel-card" id="panel-2">
+          <div class="panel-tag"><span class="tag-dot tag-dot--amber"></span>Returning Visitor</div>
+          <div class="hero variant-c" id="hero-2">
+            <p class="eyebrow" id="eyebrow-2">Workspace essentials</p>
+            <h2 id="headline-2">Loading…</h2>
+            <p id="subtitle-2"></p>
+            <div class="trust-row" id="trust-2"></div>
+            <button class="cta" id="cta-2">Shop Now</button>
+          </div>
+          <p class="panel-meta" id="meta-2">—</p>
+        </div>
+      </section>
+
+      <!-- ── Dashboard ── -->
+      <section class="dashboard">
+        <h2>Per-Segment Learning Dashboard</h2>
+
+        <div class="kpis" id="kpis"></div>
+
+        <div class="segment-grid" id="segment-grid"></div>
+
+        <h3>Recent Decisions</h3>
+        <ul id="history-list" class="history-list">
+          <li class="history-item"><span>No events yet</span><span>—</span></li>
+        </ul>
+      </section>
+
+      <!-- ── Actions ── -->
+      <section class="actions">
+        <button id="btn-refresh" class="action-btn">Refresh Panels</button>
+        <button id="btn-reset" class="action-btn action-btn--danger">Reset Model</button>
+      </section>
+
+      <section class="agent-live">
+        <div class="agent-live__header">
+          <h2>Autonomous Journey Agent Loop</h2>
+          <p>
+            Live observe -> reason -> launch -> graduate cycle for multi-page funnel optimization.
+          </p>
+        </div>
+
+        <div class="agent-controls">
+          <label class="agent-field">
+            Simulated sessions / tick
+            <input id="agent-sessions" type="number" min="0" max="400" step="10" value="40" />
+          </label>
+          <button id="btn-agent-step" class="action-btn">Run 1 Tick</button>
+          <button id="btn-agent-auto" class="action-btn">Start Auto Loop</button>
+          <button id="btn-agent-refresh" class="action-btn">Refresh Agent View</button>
+        </div>
+
+        <p id="agent-loop-status" class="agent-loop-status">Loop idle. Run a tick to start observing live updates.</p>
+
+        <div class="agent-kpis" id="agent-kpis"></div>
+
+        <div class="agent-grid">
+          <article class="agent-card">
+            <h3>Latest Insight</h3>
+            <p id="agent-insight" class="agent-insight">No reasoning yet.</p>
+          </article>
+
+          <article class="agent-card">
+            <h3>Journey Stage Snapshot</h3>
+            <div id="journey-stage-grid" class="journey-stage-grid"></div>
+          </article>
+
+          <article class="agent-card">
+            <h3>Active Experiments</h3>
+            <div id="agent-experiments" class="agent-list"></div>
+          </article>
+
+          <article class="agent-card">
+            <h3>Hypotheses</h3>
+            <div id="agent-hypotheses" class="agent-list"></div>
+          </article>
+        </div>
+
+        <article class="agent-card">
+          <h3>Agent Event Timeline</h3>
+          <ul id="agent-events" class="agent-events">
+            <li class="agent-event">No loop events yet.</li>
+          </ul>
+        </article>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

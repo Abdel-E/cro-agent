@@ -1,0 +1,110 @@
+{% comment %}
+  App block — appears in the theme editor under Apps after the parent app is installed.
+  Uses block.settings (not section.settings).
+{% endcomment %}
+
+{{ 'cro-hero-banner.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'cro-hero-banner.js' | asset_url }}" defer></script>
+
+<div class="page-width" data-cro-hero-mount {{ block.shopify_attributes }}>
+  <script type="application/json" data-cro-hero-config>
+    {
+      "apiBase": {{ block.settings.api_base_url | json }},
+      "surfaceId": {{ block.settings.surface_id | default: 'hero_banner' | json }},
+      "isReturning": {% if customer %}true{% else %}false{% endif %},
+      "locale": {{ request.locale.iso_code | json }},
+      "template": {{ template.name | json }},
+      "ctaUrl": {% if block.settings.cta_link != blank %}{{ block.settings.cta_link | json }}{% else %}{{ routes.all_products_collection_url | json }}{% endif %},
+      "utmCampaign": {{ block.settings.utm_campaign_hint | json }},
+      "showDebug": {% if block.settings.show_debug %}true{% else %}false{% endif %},
+      "fallbackHeadline": {{ block.settings.fallback_headline | json }},
+      "fallbackSubtitle": {{ block.settings.fallback_subtitle | json }}
+    }
+  </script>
+
+  <div data-cro-hero-root style="display: none;">
+    <div class="cro-hero-inner variant-a">
+      {% if block.settings.eyebrow != blank %}
+        <p class="cro-eyebrow">{{ block.settings.eyebrow | escape }}</p>
+      {% endif %}
+      <h2 data-cro-headline>{{ block.settings.fallback_headline | escape }}</h2>
+      <p data-cro-subtitle>{{ block.settings.fallback_subtitle | escape }}</p>
+      <div data-cro-trust></div>
+      <a
+        data-cro-cta
+        class="button"
+        href="{% if block.settings.cta_link != blank %}{{ block.settings.cta_link }}{% else %}{{ routes.all_products_collection_url }}{% endif %}"
+      >
+        {{ block.settings.cta_label_default | default: 'Shop now' | escape }}
+      </a>
+      <p data-cro-debug hidden></p>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "CRO contextual hero",
+  "target": "section",
+  "stylesheet": "cro-hero-banner.css",
+  "javascript": "cro-hero-banner.js",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Requires your CRO FastAPI service on HTTPS. See shopify/README.md in the Cluster-ML PoC repo."
+    },
+    {
+      "type": "text",
+      "id": "api_base_url",
+      "label": "CRO API base URL",
+      "default": "https://your-cro-api.example.com"
+    },
+    {
+      "type": "text",
+      "id": "surface_id",
+      "label": "Surface id",
+      "default": "hero_banner"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Featured"
+    },
+    {
+      "type": "text",
+      "id": "fallback_headline",
+      "label": "Fallback headline",
+      "default": "Shop our bestsellers"
+    },
+    {
+      "type": "textarea",
+      "id": "fallback_subtitle",
+      "label": "Fallback subtitle",
+      "default": "Curated picks for you."
+    },
+    {
+      "type": "text",
+      "id": "cta_label_default",
+      "label": "CTA label (before API)",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "CTA link"
+    },
+    {
+      "type": "text",
+      "id": "utm_campaign_hint",
+      "label": "utm_campaign context hint (optional)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_debug",
+      "label": "Show debug line",
+      "default": false
+    }
+  ]
+}
+{% endschema %}
