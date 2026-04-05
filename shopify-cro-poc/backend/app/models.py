@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from app.agent.config import DEFAULT_AGENT_TUNING
 
 # ---------------------------------------------------------------------------
 # /decide
@@ -271,14 +272,14 @@ class JourneyReasoningResponse(BaseModel):
 
 class AgentTickRequest(BaseModel):
     simulate_sessions: int = Field(default=0, ge=0, le=2000)
-    min_stage_impressions: int = Field(default=25, ge=1, le=100000)
-    stage_drop_off_threshold: float = Field(default=0.55, ge=0.0, le=1.0)
-    min_segment_impressions: int = Field(default=12, ge=1, le=100000)
-    segment_gap_threshold: float = Field(default=0.12, ge=0.0, le=1.0)
-    trend_window: int = Field(default=20, ge=2, le=10000)
-    trend_decline_threshold: float = Field(default=0.15, ge=0.0, le=1.0)
-    max_hypotheses: int = Field(default=3, ge=1, le=10)
-    max_experiments: int = Field(default=3, ge=1, le=10)
+    min_stage_impressions: int = Field(default=DEFAULT_AGENT_TUNING.min_stage_impressions, ge=1, le=100000)
+    stage_drop_off_threshold: float = Field(default=DEFAULT_AGENT_TUNING.stage_drop_off_threshold, ge=0.0, le=1.0)
+    min_segment_impressions: int = Field(default=DEFAULT_AGENT_TUNING.min_segment_impressions, ge=1, le=100000)
+    segment_gap_threshold: float = Field(default=DEFAULT_AGENT_TUNING.segment_gap_threshold, ge=0.0, le=1.0)
+    trend_window: int = Field(default=DEFAULT_AGENT_TUNING.trend_window, ge=2, le=10000)
+    trend_decline_threshold: float = Field(default=DEFAULT_AGENT_TUNING.trend_decline_threshold, ge=0.0, le=1.0)
+    max_hypotheses: int = Field(default=DEFAULT_AGENT_TUNING.max_hypotheses, ge=1, le=10)
+    max_experiments: int = Field(default=DEFAULT_AGENT_TUNING.max_experiments, ge=1, le=10)
 
 
 class AgentExperiment(BaseModel):

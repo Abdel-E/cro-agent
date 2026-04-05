@@ -8,15 +8,9 @@ from typing import Any, Dict, List
 
 from app.agent.prompts import build_reasoning_prompt
 from app.funnel import utcnow_iso
+from app.llm_utils import strip_markdown_code_fences
 
 logger = logging.getLogger(__name__)
-
-
-def _strip_code_fences(raw: str) -> str:
-    text = raw.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[-1].rsplit("```", 1)[0]
-    return text.strip()
 
 
 def _clamp01(value: float) -> float:
@@ -288,7 +282,7 @@ class GeminiJourneyReasoner(JourneyReasoner):
         if not raw:
             return None
         try:
-            payload = json.loads(_strip_code_fences(raw))
+            payload = json.loads(strip_markdown_code_fences(raw))
         except json.JSONDecodeError:
             return None
 

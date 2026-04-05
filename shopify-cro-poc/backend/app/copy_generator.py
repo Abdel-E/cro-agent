@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple
 
 from app.content import VariantContent
+from app.llm_utils import strip_markdown_code_fences
 from app.segments import SEGMENT_DESCRIPTIONS
 
 logger = logging.getLogger(__name__)
@@ -29,9 +30,7 @@ def parse_llm_variant_json(raw: str, expected: int) -> List[VariantContent]:
 
     Strips optional ```json fences.  Returns at most *expected* items.
     """
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0]
+    raw = strip_markdown_code_fences(raw)
     try:
         items: List[Dict[str, Any]] = json.loads(raw)
     except json.JSONDecodeError:

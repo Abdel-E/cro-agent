@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.agent.config import DEFAULT_AGENT_TUNING
 
 def _load_dotenv_files() -> None:
     """Load `.env` if `python-dotenv` is installed; otherwise no-op.
@@ -212,12 +213,12 @@ def journey_metrics() -> JourneyMetricsResponse:
 
 @app.get("/journey/observations", response_model=JourneyObservationsResponse)
 def journey_observations(
-    min_stage_impressions: int = Query(default=25, ge=1, le=100000),
-    stage_drop_off_threshold: float = Query(default=0.55, ge=0.0, le=1.0),
-    min_segment_impressions: int = Query(default=12, ge=1, le=100000),
-    segment_gap_threshold: float = Query(default=0.12, ge=0.0, le=1.0),
-    trend_window: int = Query(default=20, ge=2, le=10000),
-    trend_decline_threshold: float = Query(default=0.15, ge=0.0, le=1.0),
+    min_stage_impressions: int = Query(default=DEFAULT_AGENT_TUNING.min_stage_impressions, ge=1, le=100000),
+    stage_drop_off_threshold: float = Query(default=DEFAULT_AGENT_TUNING.stage_drop_off_threshold, ge=0.0, le=1.0),
+    min_segment_impressions: int = Query(default=DEFAULT_AGENT_TUNING.min_segment_impressions, ge=1, le=100000),
+    segment_gap_threshold: float = Query(default=DEFAULT_AGENT_TUNING.segment_gap_threshold, ge=0.0, le=1.0),
+    trend_window: int = Query(default=DEFAULT_AGENT_TUNING.trend_window, ge=2, le=10000),
+    trend_decline_threshold: float = Query(default=DEFAULT_AGENT_TUNING.trend_decline_threshold, ge=0.0, le=1.0),
 ) -> JourneyObservationsResponse:
     try:
         payload = state.journey_observations(
@@ -235,14 +236,14 @@ def journey_observations(
 
 @app.get("/journey/reasoning", response_model=JourneyReasoningResponse)
 def journey_reasoning(
-    min_stage_impressions: int = Query(default=25, ge=1, le=100000),
-    stage_drop_off_threshold: float = Query(default=0.55, ge=0.0, le=1.0),
-    min_segment_impressions: int = Query(default=12, ge=1, le=100000),
-    segment_gap_threshold: float = Query(default=0.12, ge=0.0, le=1.0),
-    trend_window: int = Query(default=20, ge=2, le=10000),
-    trend_decline_threshold: float = Query(default=0.15, ge=0.0, le=1.0),
-    max_hypotheses: int = Query(default=3, ge=1, le=10),
-    max_experiments: int = Query(default=3, ge=1, le=10),
+    min_stage_impressions: int = Query(default=DEFAULT_AGENT_TUNING.min_stage_impressions, ge=1, le=100000),
+    stage_drop_off_threshold: float = Query(default=DEFAULT_AGENT_TUNING.stage_drop_off_threshold, ge=0.0, le=1.0),
+    min_segment_impressions: int = Query(default=DEFAULT_AGENT_TUNING.min_segment_impressions, ge=1, le=100000),
+    segment_gap_threshold: float = Query(default=DEFAULT_AGENT_TUNING.segment_gap_threshold, ge=0.0, le=1.0),
+    trend_window: int = Query(default=DEFAULT_AGENT_TUNING.trend_window, ge=2, le=10000),
+    trend_decline_threshold: float = Query(default=DEFAULT_AGENT_TUNING.trend_decline_threshold, ge=0.0, le=1.0),
+    max_hypotheses: int = Query(default=DEFAULT_AGENT_TUNING.max_hypotheses, ge=1, le=10),
+    max_experiments: int = Query(default=DEFAULT_AGENT_TUNING.max_experiments, ge=1, le=10),
 ) -> JourneyReasoningResponse:
     try:
         payload = state.journey_reasoning(
