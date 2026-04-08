@@ -6,3 +6,5 @@ my_project_venv/
 *.pyc
 simulator/output/*.csv
 CONTRIBUTING.md
+
+NOTES.md
