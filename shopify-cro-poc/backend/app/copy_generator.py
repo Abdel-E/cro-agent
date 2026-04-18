@@ -146,10 +146,11 @@ class GeminiCopyGenerator(CopyGenerator):
 
     def __init__(self, model: str | None = None) -> None:
         try:
-            import google.generativeai as genai
+            from google import genai
+            from google.genai import types
         except ImportError as exc:
             raise ImportError(
-                "pip install google-generativeai to use GeminiCopyGenerator"
+                "pip install google-genai to use GeminiCopyGenerator"
             ) from exc
 
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
@@ -158,22 +159,27 @@ class GeminiCopyGenerator(CopyGenerator):
                 "Set GOOGLE_API_KEY or GEMINI_API_KEY for Gemini copy generation"
             )
 
-        genai.configure(api_key=api_key)
+        self._client = genai.Client(api_key=api_key)
         self._model_name = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-
-        # Prefer JSON mode when the SDK supports it (reduces fence / prose leakage).
-        try:
-            gen_cfg = genai.GenerationConfig(
-                temperature=0.8,
-                max_output_tokens=1024,
-                response_mime_type="application/json",
-            )
-        except TypeError:
-            gen_cfg = genai.GenerationConfig(temperature=0.8, max_output_tokens=1024)
-
-        self._model = genai.GenerativeModel(
-            model_name=self._model_name,
-            generation_config=gen_cfg,
+        self._config = types.GenerateContentConfig(
+            responseMimeType="application/json",
+            responseSchema={
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "headline": {"type": "string"},
+                        "subtitle": {"type": "string"},
+                        "cta_text": {"type": "string"},
+                        "trust_signals": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            temperature=0.8,
+            maxOutputTokens=1024,
         )
 
     def generate(
@@ -186,7 +192,11 @@ class GeminiCopyGenerator(CopyGenerator):
     ) -> List[VariantContent]:
         prompt = _build_copy_prompt(product, reviews, segment, num_variants)
         try:
-            response = self._model.generate_content(prompt)
+            response = self._client.models.generate_content(
+                model=self._model_name,
+                contents=prompt,
+                config=self._config,
+            )
         except Exception:
             logger.exception("Gemini generate_content failed")
             return []

@@ -100,3 +100,33 @@ Keep it short and honest. One good paragraph is better than a long vague update.
 - If the simulator or API clients send `traffic_source`, confirm they populate it consistently with these buckets.
 - Optional: revisit mobile organic / empty source if analytics show a large `default` slice worth splitting.
 
+---
+
+## 2026-04-18 — Pivot: core bandit first, simulation as deliverable
+
+**What changed**
+
+- Reframed the repo around the **core contextual bandit** (`/decide`, `/feedback`, `/metrics`) and the **simulation workflow** (`make simulate`, `make plot`) as the main demo path.
+- Moved journey-heavy docs and surfaces into a more clearly **advanced / experimental** role instead of presenting them as the default story.
+- Recast the current agent loop as a **light orchestration / reporting sandbox** that can run simulated traffic and summarize experiments, without promising a full agent-first product.
+
+**Why**
+
+- The project risked drifting into a bigger journey platform than the original PoC needed.
+- The strongest, most defensible deliverable is still the segmented Thompson-sampling loop plus the charts it produces.
+
+**Learnings**
+
+- A narrower product story is often stronger than a broader technical surface.
+- The simulator and plots already communicate the value proposition better than the larger journey feature set.
+
+**Tradeoffs / risks**
+
+- The codebase still contains journey-specific internals under the agent sandbox, so the public story is simpler than the underlying architecture.
+- Future readers need clear README / UI language so they do not assume the experimental journey pieces are the core deliverable.
+
+**Next**
+
+- Keep the core demo path frictionless and honest.
+- Tighten the simulation artifacts so `demo_assets/` can serve as the canonical presentation output.
+

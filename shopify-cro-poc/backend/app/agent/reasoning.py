@@ -6,7 +6,6 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from app.agent.prompts import build_reasoning_prompt
 from app.funnel import utcnow_iso
 from app.llm_utils import strip_markdown_code_fences
 
@@ -194,31 +193,22 @@ class MockJourneyReasoner(JourneyReasoner):
 class GeminiJourneyReasoner(JourneyReasoner):
     def __init__(self, model: str | None = None) -> None:
         try:
-            import google.generativeai as genai
+            from google import genai
+            from google.genai import types
         except ImportError as exc:
             raise ImportError(
-                "pip install google-generativeai to use GeminiJourneyReasoner"
+                "pip install google-genai to use GeminiJourneyReasoner"
             ) from exc
 
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("Set GOOGLE_API_KEY or GEMINI_API_KEY for Gemini reasoning")
 
-        genai.configure(api_key=api_key)
+        self._client = genai.Client(api_key=api_key)
         self._model_name = model or os.environ.get("AGENT_REASONER_MODEL", "gemini-2.5-flash")
-
-        try:
-            gen_cfg = genai.GenerationConfig(
-                temperature=0.6,
-                max_output_tokens=2048,
-                response_mime_type="application/json",
-            )
-        except TypeError:
-            gen_cfg = genai.GenerationConfig(temperature=0.6, max_output_tokens=2048)
-
-        self._model = genai.GenerativeModel(
-            model_name=self._model_name,
-            generation_config=gen_cfg,
+        self._insight_config = types.GenerateContentConfig(
+            temperature=0.2,
+            maxOutputTokens=160,
         )
         self._fallback = MockJourneyReasoner()
 
@@ -234,162 +224,56 @@ class GeminiJourneyReasoner(JourneyReasoner):
         max_hypotheses: int,
         max_experiments: int,
     ) -> Dict[str, Any]:
-        prompt = build_reasoning_prompt(
+        fallback_payload = self._fallback.reason(
             observations=observations,
             metrics_summary=metrics_summary,
             max_hypotheses=max_hypotheses,
             max_experiments=max_experiments,
         )
-        try:
-            response = self._model.generate_content(prompt)
-            raw = (response.text or "").strip()
-        except Exception:
-            logger.exception("Gemini reasoning generation failed; falling back to mock")
-            return self._fallback.reason(
-                observations=observations,
-                metrics_summary=metrics_summary,
-                max_hypotheses=max_hypotheses,
-                max_experiments=max_experiments,
-            )
-
-        parsed = self._parse_reasoning_json(
-            raw=raw,
-            max_hypotheses=max_hypotheses,
-            max_experiments=max_experiments,
+        return self._with_optional_gemini_insight(
+            fallback_payload=fallback_payload,
+            observations=observations,
+            metrics_summary=metrics_summary,
         )
-        if parsed is None:
-            logger.warning("Gemini reasoning payload invalid; falling back to mock")
-            return self._fallback.reason(
-                observations=observations,
-                metrics_summary=metrics_summary,
-                max_hypotheses=max_hypotheses,
-                max_experiments=max_experiments,
-            )
 
-        parsed["policy"] = "journey_reasoning_v1"
-        parsed["backend"] = self.backend_name
-        parsed["generated_at"] = utcnow_iso()
-        parsed["source_observations"] = len(observations)
-        return parsed
-
-    def _parse_reasoning_json(
+    def _with_optional_gemini_insight(
         self,
         *,
-        raw: str,
-        max_hypotheses: int,
-        max_experiments: int,
-    ) -> Dict[str, Any] | None:
-        if not raw:
-            return None
+        fallback_payload: Dict[str, Any],
+        observations: List[Dict[str, Any]],
+        metrics_summary: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        summary = metrics_summary.get("summary", {})
+        base_insight = str(fallback_payload.get("insight") or "").strip()
+        insight_prompt = (
+            "You are polishing a CRO sandbox insight for display in a dashboard.\n"
+            "Rewrite the draft into 1-2 crisp sentences, under 45 words.\n"
+            "Keep stage names and percentages accurate. Use plain text only.\n"
+            "If there is not enough signal, say exactly: "
+            "\"No data available to generate insights, hypotheses, or experiments.\"\n\n"
+            f"Draft insight: {base_insight}\n"
+            f"Observation count: {len(observations)}\n"
+            f"Bottleneck stage: {summary.get('bottleneck_stage')}\n"
+            f"Bottleneck drop-off rate: {summary.get('bottleneck_drop_off_rate', 0.0):.1%}\n"
+            f"Top observations: {json.dumps(observations[:2])}\n"
+        )
         try:
-            payload = json.loads(strip_markdown_code_fences(raw))
-        except json.JSONDecodeError:
-            return None
-
-        if not isinstance(payload, dict):
-            return None
-
-        hypotheses_in = payload.get("hypotheses", [])
-        experiments_in = payload.get("experiments", [])
-        insight = str(payload.get("insight", "")).strip()
-
-        if not isinstance(hypotheses_in, list) or not isinstance(experiments_in, list):
-            return None
-
-        hypotheses: List[Dict[str, Any]] = []
-        for idx, item in enumerate(hypotheses_in[:max_hypotheses], start=1):
-            if not isinstance(item, dict):
-                continue
-            hypotheses.append(
-                {
-                    "hypothesis_id": str(item.get("hypothesis_id") or f"H-{idx:03d}"),
-                    "stage": _coerce_stage(item.get("stage")),
-                    "segment": item.get("segment") if item.get("segment") not in ("", None) else None,
-                    "confidence": _clamp01(_safe_float(item.get("confidence"), 0.6)),
-                    "rationale": str(item.get("rationale") or ""),
-                    "proposed_angle": str(item.get("proposed_angle") or ""),
-                    "expected_effect": str(item.get("expected_effect") or ""),
-                }
+            response = self._client.models.generate_content(
+                model=self._model_name,
+                contents=insight_prompt,
+                config=self._insight_config,
             )
+            insight = (response.text or "").strip()
+        except Exception:
+            logger.exception("Gemini insight generation failed; returning mock insight")
+            return fallback_payload
 
-        hypothesis_ids = {h["hypothesis_id"] for h in hypotheses}
-        default_hypothesis_id = hypotheses[0]["hypothesis_id"] if hypotheses else "H-001"
-
-        experiments: List[Dict[str, Any]] = []
-        for idx, item in enumerate(experiments_in[:max_experiments], start=1):
-            if not isinstance(item, dict):
-                continue
-
-            allocation_in = item.get("allocation")
-            allocation = {
-                "control": 0.34,
-                "variant_b": 0.33,
-                "variant_c": 0.33,
-            }
-            if isinstance(allocation_in, dict):
-                for key in ("control", "variant_b", "variant_c"):
-                    if key in allocation_in:
-                        allocation[key] = _clamp01(_safe_float(allocation_in.get(key), allocation[key]))
-
-            variants_in = item.get("variants", [])
-            variants: List[Dict[str, str]] = []
-            if isinstance(variants_in, list):
-                for variant in variants_in[:3]:
-                    if not isinstance(variant, dict):
-                        continue
-                    variants.append(
-                        {
-                            "variant_id": str(variant.get("variant_id") or "variant"),
-                            "message_angle": str(variant.get("message_angle") or ""),
-                            "description": str(variant.get("description") or ""),
-                        }
-                    )
-            if not variants:
-                variants = [
-                    {
-                        "variant_id": "control",
-                        "message_angle": "Current experience",
-                        "description": "Keep current baseline.",
-                    },
-                    {
-                        "variant_id": "variant_b",
-                        "message_angle": "Alternative framing",
-                        "description": "Test stronger trust/value framing.",
-                    },
-                    {
-                        "variant_id": "variant_c",
-                        "message_angle": "Urgency framing",
-                        "description": "Test urgency and social proof blend.",
-                    },
-                ]
-
-            hypothesis_id = str(item.get("hypothesis_id") or default_hypothesis_id)
-            if hypothesis_id not in hypothesis_ids:
-                hypothesis_id = default_hypothesis_id
-
-            experiments.append(
-                {
-                    "experiment_id": str(item.get("experiment_id") or f"EXP-{idx:03d}"),
-                    "hypothesis_id": hypothesis_id,
-                    "stage": _coerce_stage(item.get("stage")),
-                    "objective_metric": str(item.get("objective_metric") or "stage_conversion_rate"),
-                    "allocation": allocation,
-                    "success_criterion": str(
-                        item.get("success_criterion")
-                        or "Promote winner when posterior win probability > 0.9 with sufficient traffic."
-                    ),
-                    "variants": variants,
-                }
-            )
-
-        if not insight:
-            insight = "Reasoning generated from journey observations."
-
-        return {
-            "insight": insight,
-            "hypotheses": hypotheses,
-            "experiments": experiments,
-        }
+        if insight:
+            if insight[-1] not in ".!?":
+                insight = f"{insight}."
+            fallback_payload["insight"] = insight
+            fallback_payload["backend"] = self.backend_name
+        return fallback_payload
 
 
 def create_reasoner() -> JourneyReasoner:

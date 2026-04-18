@@ -25,19 +25,25 @@ import requests
 DEFAULT_PROFILES: List[Dict[str, Any]] = [
     {
         "segment": "new_mobile_paid",
-        "weight": 0.35,
+        "weight": 0.30,
         "context": {"device_type": "mobile", "traffic_source": "meta", "is_returning": False},
         "ctrs": {"A": 0.01, "B": 0.03, "C": 0.05},
     },
     {
+        "segment": "high_intent_search",
+        "weight": 0.20,
+        "context": {"device_type": "desktop", "traffic_source": "organic", "is_returning": False},
+        "ctrs": {"A": 0.03, "B": 0.06, "C": 0.04},
+    },
+    {
         "segment": "new_desktop_direct",
-        "weight": 0.25,
+        "weight": 0.20,
         "context": {"device_type": "desktop", "traffic_source": "direct", "is_returning": False},
         "ctrs": {"A": 0.04, "B": 0.02, "C": 0.01},
     },
     {
         "segment": "returning_any",
-        "weight": 0.20,
+        "weight": 0.15,
         "context": {"device_type": "desktop", "traffic_source": "direct", "is_returning": True},
         "ctrs": {"A": 0.02, "B": 0.05, "C": 0.03},
     },
@@ -49,7 +55,7 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
     },
     {
         "segment": "default",
-        "weight": 0.10,
+        "weight": 0.05,
         "context": {"device_type": "mobile", "traffic_source": "email", "is_returning": False},
         "ctrs": {"A": 0.02, "B": 0.02, "C": 0.02},
     },
@@ -60,6 +66,9 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
 class SimulationStats:
     bandit_reward: int = 0
     baseline_reward: int = 0
+    completed_sessions: int = 0
+    failed_decides: int = 0
+    failed_feedback: int = 0
     selection_counts: Dict[str, int] = field(default_factory=dict)
     segment_counts: Dict[str, int] = field(default_factory=dict)
 
@@ -78,6 +87,38 @@ def sample_profile(profiles: List[Dict[str, Any]], rng: random.Random) -> Dict[s
 
 def choose_uniform_variant(variants: List[str], rng: random.Random) -> str:
     return variants[rng.randrange(len(variants))]
+
+
+def write_run_metadata(
+    output_file: Path,
+    *,
+    base_url: str,
+    requested_sessions: int,
+    seed: int,
+    profiles_path: str | None,
+    uniform_baseline: bool,
+    profiles: List[Dict[str, Any]],
+    variants: List[str],
+    stats: SimulationStats,
+) -> Path:
+    metadata_file = output_file.with_suffix(".meta.json")
+    payload = {
+        "csv_file": output_file.name,
+        "base_url": base_url,
+        "sessions_requested": requested_sessions,
+        "sessions_completed": stats.completed_sessions,
+        "seed": seed,
+        "profiles_source": profiles_path or "DEFAULT_PROFILES",
+        "uniform_baseline": uniform_baseline,
+        "variants": variants,
+        "profiles": profiles,
+        "failed_decides": stats.failed_decides,
+        "failed_feedback": stats.failed_feedback,
+        "bandit_reward": stats.bandit_reward,
+        "baseline_reward": stats.baseline_reward,
+    }
+    metadata_file.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return metadata_file
 
 
 def main() -> None:
@@ -134,6 +175,7 @@ def main() -> None:
                 resp.raise_for_status()
                 decision = resp.json()
             except requests.RequestException as exc:
+                stats.failed_decides += 1
                 print(f"[session {session}] /decide failed: {exc}", file=sys.stderr)
                 continue
 
@@ -156,6 +198,7 @@ def main() -> None:
                 )
                 fb_resp.raise_for_status()
             except requests.RequestException as exc:
+                stats.failed_feedback += 1
                 print(f"[session {session}] /feedback failed: {exc}", file=sys.stderr)
 
             baseline_variant = ""
@@ -176,18 +219,39 @@ def main() -> None:
                 ctx.get("is_returning", False),
                 baseline_variant, baseline_event, baseline_cumulative,
             ])
+            stats.completed_sessions += 1
 
             if session % 500 == 0:
                 print(f"  ... {session}/{args.sessions} sessions")
 
-    print(f"\nSimulation complete — {args.sessions} sessions")
+    metadata_file = write_run_metadata(
+        output_file,
+        base_url=args.base_url.rstrip("/"),
+        requested_sessions=args.sessions,
+        seed=args.seed,
+        profiles_path=args.profiles,
+        uniform_baseline=args.uniform_baseline,
+        profiles=profiles,
+        variants=all_variants,
+        stats=stats,
+    )
+
+    print(f"\nSimulation complete — requested {args.sessions} sessions")
+    print(f"Completed sessions:  {stats.completed_sessions}")
     print(f"Segment distribution: {dict(stats.segment_counts)}")
     print(f"Selection counts:     {dict(stats.selection_counts)}")
     print(f"Bandit cumulative reward: {stats.bandit_reward}")
     if args.uniform_baseline:
         print(f"Baseline cumulative reward: {stats.baseline_reward}")
         print(f"Reward lift: {stats.bandit_reward - stats.baseline_reward}")
+    if stats.failed_decides or stats.failed_feedback:
+        print(
+            "Warnings:"
+            f" failed /decide={stats.failed_decides},"
+            f" failed /feedback={stats.failed_feedback}"
+        )
     print(f"Output: {output_file}")
+    print(f"Metadata: {metadata_file}")
 
 
 if __name__ == "__main__":

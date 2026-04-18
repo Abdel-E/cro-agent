@@ -61,7 +61,7 @@ from app.state import (
 )
 
 
-app = FastAPI(title="CRO Contextual Personalization Agent", version="0.2.0")
+app = FastAPI(title="CRO Bandit PoC API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -111,10 +111,12 @@ logging.getLogger("uvicorn.access").addFilter(_QuietProbePathsFilter())
 def root() -> dict[str, str]:
     """If you open port 8000 in a browser, this explains where the UI lives."""
     return {
-        "service": "CRO Contextual Personalization API",
+        "service": "CRO Bandit PoC API",
         "docs": "/docs",
         "health": "/health",
         "frontend": "http://localhost:5173 (run: cd frontend && python -m http.server 5173)",
+        "core_demo": "Use /decide, /feedback, /metrics, /segments, then run the simulator for charts.",
+        "experimental": "Journey and agent endpoints are exploratory sandbox surfaces.",
         "note": "404s for /.well-known/* or /mcp are from other tools (e.g. IDE), not this app.",
     }
 
@@ -160,6 +162,7 @@ def feedback(payload: FeedbackRequest) -> FeedbackResponse:
 
 @app.post("/journey/decide", response_model=JourneyDecideResponse)
 def journey_decide(payload: JourneyDecideRequest) -> JourneyDecideResponse:
+    """Advanced sandbox endpoint for the multi-stage journey flow."""
     merged_context = _merge_context(
         payload.context,
         device_type=payload.device_type,
@@ -185,6 +188,7 @@ def journey_decide(payload: JourneyDecideRequest) -> JourneyDecideResponse:
 
 @app.post("/journey/event", response_model=JourneyEventResponse)
 def journey_event(payload: JourneyEventRequest) -> JourneyEventResponse:
+    """Advanced sandbox endpoint for recording journey-stage outcomes."""
     try:
         response = state.journey_event(
             event_type=payload.event_type,
@@ -208,6 +212,7 @@ def journey_event(payload: JourneyEventRequest) -> JourneyEventResponse:
 
 @app.get("/journey/metrics", response_model=JourneyMetricsResponse)
 def journey_metrics() -> JourneyMetricsResponse:
+    """Advanced sandbox metrics for the journey flow."""
     return JourneyMetricsResponse(**state.journey_metrics())
 
 
@@ -220,6 +225,7 @@ def journey_observations(
     trend_window: int = Query(default=DEFAULT_AGENT_TUNING.trend_window, ge=2, le=10000),
     trend_decline_threshold: float = Query(default=DEFAULT_AGENT_TUNING.trend_decline_threshold, ge=0.0, le=1.0),
 ) -> JourneyObservationsResponse:
+    """Experimental sandbox observations derived from journey metrics."""
     try:
         payload = state.journey_observations(
             min_stage_impressions=min_stage_impressions,
@@ -245,6 +251,7 @@ def journey_reasoning(
     max_hypotheses: int = Query(default=DEFAULT_AGENT_TUNING.max_hypotheses, ge=1, le=10),
     max_experiments: int = Query(default=DEFAULT_AGENT_TUNING.max_experiments, ge=1, le=10),
 ) -> JourneyReasoningResponse:
+    """Experimental sandbox reasoning derived from the journey analyzer."""
     try:
         payload = state.journey_reasoning(
             min_stage_impressions=min_stage_impressions,
@@ -263,6 +270,7 @@ def journey_reasoning(
 
 @app.post("/agent/tick", response_model=AgentTickResponse)
 def agent_tick(payload: AgentTickRequest) -> AgentTickResponse:
+    """Run one experimental sandbox cycle, optionally with simulated sessions."""
     try:
         result = state.agent_tick(
             simulate_sessions=payload.simulate_sessions,
@@ -282,11 +290,13 @@ def agent_tick(payload: AgentTickRequest) -> AgentTickResponse:
 
 @app.get("/agent/status", response_model=AgentStatusResponse)
 def agent_status() -> AgentStatusResponse:
+    """Return current experimental sandbox status."""
     return AgentStatusResponse(**state.agent_status())
 
 
 @app.get("/agent/history", response_model=AgentHistoryResponse)
 def agent_history(limit: int = Query(default=80, ge=1, le=300)) -> AgentHistoryResponse:
+    """Return recent experimental sandbox events."""
     return AgentHistoryResponse(**state.agent_history(limit=limit))
 
 

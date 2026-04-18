@@ -3,20 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Hero Banner Agent — Demo</title>
+    <title>CRO Bandit PoC — Demo</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="shell">
       <header class="topbar">
-        <span class="logo">Smart Hero Banner Agent</span>
-        <span class="badge">Contextual Personalization Demo</span>
+        <span class="logo">CRO Bandit PoC</span>
+        <span class="badge">Simulation-First Demo</span>
       </header>
 
       <p class="intro">
-        Same store, same moment — three visitors see <strong>completely different</strong>
-        experiences optimised for their segment. The contextual bandit learns which
-        content converts best <em>per segment</em> in real time.
+        Same store, same moment — three visitors see <strong>different</strong>
+        hero variants for their segment. The core demo is the contextual bandit learning
+        which content wins <em>per segment</em>, then showing the outcome through simulation
+        runs and plots. The agent section below is an experimental sandbox.
       </p>
 
       <!-- ── Three personalization panels ── -->
@@ -60,7 +61,7 @@
 
       <!-- ── Dashboard ── -->
       <section class="dashboard">
-        <h2>Per-Segment Learning Dashboard</h2>
+        <h2>Core Bandit Dashboard</h2>
 
         <div class="kpis" id="kpis"></div>
 
@@ -80,9 +81,10 @@
 
       <section class="agent-live">
         <div class="agent-live__header">
-          <h2>Autonomous Journey Agent Loop</h2>
+          <h2>Experimental Agent Sandbox</h2>
           <p>
-            Live observe -> reason -> launch -> graduate cycle for multi-page funnel optimization.
+            Secondary demo surface: runs simulated sessions through the current sandbox,
+            then summarizes signals, hypotheses, and experiment state.
           </p>
         </div>
 
@@ -91,12 +93,12 @@
             Simulated sessions / tick
             <input id="agent-sessions" type="number" min="0" max="400" step="10" value="40" />
           </label>
-          <button id="btn-agent-step" class="action-btn">Run 1 Tick</button>
-          <button id="btn-agent-auto" class="action-btn">Start Auto Loop</button>
+          <button id="btn-agent-step" class="action-btn">Run 1 Sandbox Tick</button>
+          <button id="btn-agent-auto" class="action-btn">Start Auto Sandbox</button>
           <button id="btn-agent-refresh" class="action-btn">Refresh Agent View</button>
         </div>
 
-        <p id="agent-loop-status" class="agent-loop-status">Loop idle. Run a tick to start observing live updates.</p>
+        <p id="agent-loop-status" class="agent-loop-status">Sandbox idle. Run a tick to generate simulated traffic and inspect the current agent loop.</p>
 
         <div class="agent-kpis" id="agent-kpis"></div>
 
@@ -107,7 +109,7 @@
           </article>
 
           <article class="agent-card">
-            <h3>Journey Stage Snapshot</h3>
+            <h3>Sandbox Funnel Snapshot</h3>
             <div id="journey-stage-grid" class="journey-stage-grid"></div>
           </article>
 
@@ -123,7 +125,7 @@
         </div>
 
         <article class="agent-card">
-          <h3>Agent Event Timeline</h3>
+          <h3>Sandbox Event Timeline</h3>
           <ul id="agent-events" class="agent-events">
             <li class="agent-event">No loop events yet.</li>
           </ul>

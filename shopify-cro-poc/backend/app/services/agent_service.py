@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from threading import Lock
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from app.agent.config import build_analyzer_config
 from app.agent.orchestrator import AgentOrchestrator
@@ -11,6 +11,13 @@ from app.services.journey_service import JourneyService
 
 
 class AgentService:
+    """Experimental sandbox for observing, reasoning, and launching journey experiments.
+
+    The core PoC remains the `/decide` -> `/feedback` -> `/metrics` loop. This
+    service is kept as a secondary orchestration layer for simulated traffic and
+    lightweight experiment reporting.
+    """
+
     def __init__(
         self,
         *,

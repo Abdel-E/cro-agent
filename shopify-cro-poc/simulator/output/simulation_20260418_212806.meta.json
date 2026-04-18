@@ -1,0 +1,105 @@
+{
+  "csv_file": "simulation_20260418_212806.csv",
+  "base_url": "http://localhost:8000",
+  "sessions_requested": 5000,
+  "sessions_completed": 5000,
+  "seed": 42,
+  "profiles_source": "DEFAULT_PROFILES",
+  "uniform_baseline": true,
+  "variants": [
+    "A",
+    "B",
+    "C"
+  ],
+  "profiles": [
+    {
+      "segment": "new_mobile_paid",
+      "weight": 0.3,
+      "context": {
+        "device_type": "mobile",
+        "traffic_source": "meta",
+        "is_returning": false
+      },
+      "ctrs": {
+        "A": 0.01,
+        "B": 0.03,
+        "C": 0.05
+      }
+    },
+    {
+      "segment": "high_intent_search",
+      "weight": 0.2,
+      "context": {
+        "device_type": "desktop",
+        "traffic_source": "organic",
+        "is_returning": false
+      },
+      "ctrs": {
+        "A": 0.03,
+        "B": 0.06,
+        "C": 0.04
+      }
+    },
+    {
+      "segment": "new_desktop_direct",
+      "weight": 0.2,
+      "context": {
+        "device_type": "desktop",
+        "traffic_source": "direct",
+        "is_returning": false
+      },
+      "ctrs": {
+        "A": 0.04,
+        "B": 0.02,
+        "C": 0.01
+      }
+    },
+    {
+      "segment": "returning_any",
+      "weight": 0.15,
+      "context": {
+        "device_type": "desktop",
+        "traffic_source": "direct",
+        "is_returning": true
+      },
+      "ctrs": {
+        "A": 0.02,
+        "B": 0.05,
+        "C": 0.03
+      }
+    },
+    {
+      "segment": "price_sensitive",
+      "weight": 0.1,
+      "context": {
+        "device_type": "mobile",
+        "traffic_source": "google",
+        "utm_campaign": "summer_discount",
+        "is_returning": false
+      },
+      "ctrs": {
+        "A": 0.01,
+        "B": 0.01,
+        "C": 0.06
+      }
+    },
+    {
+      "segment": "default",
+      "weight": 0.05,
+      "context": {
+        "device_type": "mobile",
+        "traffic_source": "email",
+        "is_returning": false
+      },
+      "ctrs": {
+        "A": 0.02,
+        "B": 0.02,
+        "C": 0.02
+      }
+    }
+  ],
+  "failed_decides": 0,
+  "failed_feedback": 0,
+  "bandit_reward": 214,
+  "baseline_reward": 152
+}

@@ -59,6 +59,7 @@ To enable Gemini:
 ```bash
 export AGENT_REASONER_BACKEND=gemini
 export GOOGLE_API_KEY=your_key
+pip install google-genai
 # optional
 export AGENT_REASONER_MODEL=gemini-2.5-flash
 ```

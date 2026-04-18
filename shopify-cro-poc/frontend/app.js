@@ -99,17 +99,15 @@ function renderKpis(data, agentStatus = null) {
   const t = data.totals || {};
   const segCount = Object.keys(data.segments || {}).length;
   const loopTicks = agentStatus?.tick_count || 0;
-  const journeySessions = agentStatus?.journey_sessions?.total || 0;
-  const productCvr = agentStatus?.journey_metrics?.stages?.product_page?.conversion_rate || 0;
+  const activeExperiments = (agentStatus?.active_experiments || []).length;
 
   document.getElementById("kpis").innerHTML = [
     { label: "Total Impressions", value: t.impressions || 0 },
     { label: "Total Clicks", value: t.successes || 0 },
     { label: "Overall CTR", value: pct(t.ctr || 0) },
     { label: "Active Segments", value: segCount },
-    { label: "Agent Loop Ticks", value: loopTicks },
-    { label: "Journey Product CVR", value: pct(productCvr) },
-    { label: "Journey Sessions", value: journeySessions },
+    { label: "Sandbox Ticks", value: loopTicks },
+    { label: "Active Sandbox Experiments", value: activeExperiments },
   ]
     .map(
       (k) => `
@@ -198,7 +196,7 @@ async function fetchMetrics() {
   } catch { /* silent */ }
 }
 
-// ── Phase 4: Agent loop dashboard ────────────────────────────────────
+// ── Experimental agent sandbox ───────────────────────────────────────
 
 function renderAgentKpis(status) {
   const kpis = document.getElementById("agent-kpis");
@@ -206,11 +204,11 @@ function renderAgentKpis(status) {
   const completed = (status.completed_experiments || []).length;
   const sessions = status.journey_sessions?.total || 0;
   kpis.innerHTML = [
-    { label: "Loop Ticks", value: status.tick_count || 0 },
-    { label: "Latest Observations", value: status.latest_observations || 0 },
+    { label: "Sandbox Ticks", value: status.tick_count || 0 },
+    { label: "Latest Signals", value: status.latest_observations || 0 },
     { label: "Active Experiments", value: active },
     { label: "Completed Experiments", value: completed },
-    { label: "Journey Sessions", value: sessions },
+    { label: "Sandbox Sessions", value: sessions },
   ]
     .map((k) => `
       <div class="kpi">
@@ -261,7 +259,7 @@ function renderAgentExperiments(status) {
     ...active.map((exp) => `
       <div class="agent-item">
         <strong>${exp.experiment_id} · ${exp.stage}</strong>
-        <span>Status: active · Started at ${exp.start_impressions} stage impressions</span>
+        <span>Status: active · Started at ${exp.start_impressions} sandbox stage impressions</span>
       </div>`),
     ...completed.map((exp) => `
       <div class="agent-item">
@@ -338,7 +336,7 @@ async function refreshAgentView() {
     renderAgentExperiments(status);
     renderAgentEvents(history.events || []);
     updateAgentLoopStatus(
-      `Live status: tick #${status.tick_count || 0} · active ${
+      `Sandbox status: tick #${status.tick_count || 0} · active ${
         (status.active_experiments || []).length
       } · completed ${(status.completed_experiments || []).length}`
     );
@@ -372,7 +370,7 @@ async function runAgentTick() {
     renderAgentExperiments(tick.status || {});
     renderAgentEvents(tick.events || []);
     updateAgentLoopStatus(
-      `Tick #${tick.tick} complete · simulated ${tick.simulation?.sessions || 0} sessions · launched ${
+      `Sandbox tick #${tick.tick} complete · simulated ${tick.simulation?.sessions || 0} sessions · launched ${
         (tick.launched || []).length
       } · graduated ${(tick.graduated || []).length}`
     );
@@ -392,8 +390,8 @@ function stopAutoLoop() {
     clearInterval(agentAutoTimer);
     agentAutoTimer = null;
   }
-  updateAgentLoopStatus("Auto loop stopped. You can run a manual tick anytime.");
-  document.getElementById("btn-agent-auto").textContent = "Start Auto Loop";
+  updateAgentLoopStatus("Auto sandbox stopped. You can run a manual tick anytime.");
+  document.getElementById("btn-agent-auto").textContent = "Start Auto Sandbox";
 }
 
 function toggleAutoLoop() {
@@ -402,8 +400,8 @@ function toggleAutoLoop() {
     return;
   }
 
-  document.getElementById("btn-agent-auto").textContent = "Stop Auto Loop";
-  updateAgentLoopStatus("Auto loop running... a tick is executed every 3 seconds.");
+  document.getElementById("btn-agent-auto").textContent = "Stop Auto Sandbox";
+  updateAgentLoopStatus("Auto sandbox running... a tick is executed every 3 seconds.");
   runAgentTick();
   agentAutoTimer = setInterval(runAgentTick, 3000);
 }
